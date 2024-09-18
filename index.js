@@ -12,7 +12,12 @@ client.once('ready', () => {
 
 client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
-
+    if (message.content.startsWith(`${prefix}invite`)) {
+        const inviteURL = "https://discord.com/oauth2/authorize?client_id=817952432751509515&permissions=0&integration_type=0&scope=bot"
+        const embed = new EmbedBuilder()
+            .setDescription(`[Botを招待する](${inviteURL})`)
+        message.channel.send({ embeds: [embed], })
+    }
     if (message.content.startsWith(`${prefix}rank`)) {
         const embed = new EmbedBuilder()
             .setTitle(`見たい役職番号を押してください`)
