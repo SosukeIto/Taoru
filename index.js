@@ -1,9 +1,9 @@
 require('dotenv').config();
+const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, REST, Routes } = require('discord.js');
+const { scrapeRanking } = require('./src/scraping/scrapeRanking.js');
 
 const token = process.env.TOKEN;
 const prefix = process.env.PREFIX;
-const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { scrapeRanking } = require('./src/scraping/scrapeRanking.js');
 const guildIds = [
     "707819253629452370",
     "754292647467810846",
@@ -14,13 +14,21 @@ const guildIds = [
     "807389744425074728",
     "1219756229531013220",
 ]
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent,] });
+const taoPlayerRoleId = "1286757664272945162"
+const client = new Client({ intents: [
+    GatewayIntentBits.Guilds, 
+    GatewayIntentBits.GuildMessages, 
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers] 
+});
+
 client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
 });
 
 client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
+
     if (message.content.startsWith(`${prefix}announce`)) {
         const embed = new EmbedBuilder()
             .setTitle("**このサーバーについて**")
@@ -97,25 +105,57 @@ client.on('messageCreate', async (message) => {
     }
 });
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isButton()) return;
-    const role = interaction.customId;
+    if (interaction.isButton()) {
+        const role = interaction.customId;
 
-    try {
-        const rankings = await scrapeRanking(role);
-        let contents = "";
-        for (let i = 0; i < rankings.length; i++) {
-            contents += `${i + 1}位 \`${rankings[i]['playerName']}\` : **${rankings[i]['score']}**\n`;
+        try {
+            const rankings = await scrapeRanking(role);
+            let contents = "";
+            for (let i = 0; i < rankings.length; i++) {
+                contents += `${i + 1}位 \`${rankings[i]['playerName']}\` : **${rankings[i]['score']}**\n`;
+            }
+
+            const rankingEmbed = new EmbedBuilder()
+                .setTitle(`世界Top100プレイヤー (${role})`)
+                .setColor(0x00AE86)
+                .setDescription(contents);
+
+            await interaction.update({ embeds: [rankingEmbed], components: [] }); // ボタンは無効にする
+        } catch (error) {
+            console.error('エラーが発生しました:', error);
+            await interaction.update({ content: 'ランキングを取得中にエラーが発生しました。', components: [] });
         }
-
-        const rankingEmbed = new EmbedBuilder()
-            .setTitle(`世界Top100プレイヤー (${role})`)
-            .setColor(0x00AE86)
-            .setDescription(contents);
-
-        await interaction.update({ embeds: [rankingEmbed], components: [] }); // ボタンは無効にする
-    } catch (error) {
-        console.error('エラーが発生しました:', error);
-        await interaction.update({ content: 'ランキングを取得中にエラーが発生しました。', components: [] });
+    }else if(interaction.isCommand()){
+        if (interaction.commandName === 'give-role') {
+            const member = await interaction.guild.members.fetch(interaction.user.id); // サーバーのメンバー情報を取得
+            const roles = member.roles.cache.map(role => role.name);
+            if (roles.includes("TAOPlayer")){
+                await interaction.reply({ content: '既にロールはありますよ！', ephemeral: true });
+            }else{
+                const role = interaction.guild.roles.cache.find(r => r.name === "TAOPlayer");
+                await member.roles.add(role);
+                await interaction.reply({ content: 'ロールを付与しました！', ephemeral: true });
+            }
+        }
     }
 });
+const commands = [
+    new SlashCommandBuilder()
+        .setName('give-role')
+        .setDescription('認証を行います'),
+];
+const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+
+(async () => {
+    try {
+        console.log('スラッシュコマンドを登録中...');
+        await rest.put(
+            Routes.applicationGuildCommands("817952432751509515", "1286743784712835167"),
+            { body: commands },
+        );
+        console.log('スラッシュコマンドが登録されました。');
+    } catch (error) {
+        console.error(error);
+    }
+})();
 client.login(token);
