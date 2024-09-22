@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, REST, Routes } = require('discord.js');
 const { scrapeRanking } = require('./src/scraping/scrapeRanking.js');
+const {generateRandomString} = require('./src/generateRandomString.js');
 
 const token = process.env.TOKEN;
 const prefix = process.env.PREFIX;
@@ -28,7 +29,10 @@ client.once('ready', () => {
 
 client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
-
+    if (message.content.startsWith(`${prefix}rand`)) {
+        const args = message.content.slice(prefix.length).trim().split(/ +/);
+        message.channel.send(generateRandomString(args[1]))
+    }
     if (message.content.startsWith(`${prefix}announce`)) {
         const embed = new EmbedBuilder()
             .setTitle("**このサーバーについて**")
@@ -44,35 +48,6 @@ client.on('messageCreate', async (message) => {
         const embed = new EmbedBuilder()
             .setDescription(`[Botを招待する](${inviteURL})`)
         message.channel.send({ embeds: [embed], })
-    }
-    if (message.content.startsWith(`${prefix}slink`)) {
-        const args = message.content.slice(prefix.length).trim().split(/ +/);
-        if (!args[1]) {
-            const embed = new EmbedBuilder()
-                .setTitle(`どのサーバーのリンクを取得しますか？\n`)
-                .setColor(0x00AE86)
-            contents = ""
-            for (let i = 0; i < guildIds.length; i++) {
-                const guild = client.guilds.cache.get(guildIds[i]);
-                contents += `\`${i}\` : **${guild.name}**\n`
-            }
-            embed.setDescription(`\`wwslink {serverName}\`\n${contents}`)
-            message.channel.send({ embeds: [embed], })
-            return
-        } try {
-            const guild = client.guilds.cache.get(guildIds[parseInt(args[1])]);
-            const channel = guild.channels.cache
-                .filter(ch => ch.isTextBased())
-                .first();
-            const invite = await channel.createInvite({
-                maxAge: 30,
-                maxUses: 1,
-            });
-            message.channel.send(`サーバーへの招待リンクです: ${invite.url}`);
-        } catch {
-            message.channel.send("数字で指定してください！")
-        }
-
     }
     if (message.content.startsWith(`${prefix}rank`)) {
         const embed = new EmbedBuilder()
@@ -137,12 +112,45 @@ client.on('interactionCreate', async (interaction) => {
                 await interaction.reply({ content: 'ロールを付与しました！', ephemeral: true });
             }
         }
+        if (interaction.commandName === 'server-url') {
+            const number = interaction.options.getString('number')
+            if(!number){
+                const embed = new EmbedBuilder()
+                .setTitle(`どのサーバーのリンクを取得しますか？\n`)
+                .setColor(0x00AE86)
+                contents = ""
+                for (let i = 0; i < guildIds.length; i++) {
+                    const guild = client.guilds.cache.get(guildIds[i]);
+                    contents += `\`${i}\` : **${guild.name}**\n`
+                }
+                embed.setDescription(`\`/server-url {number}\`\n${contents}`)
+                await interaction.reply({ embeds: [embed] })
+            }else{
+                const guild = client.guilds.cache.get(guildIds[parseInt(number)]);
+                const channel = guild.channels.cache
+                    .filter(ch => ch.isTextBased())
+                    .first();
+                const invite = await channel.createInvite({
+                    maxAge: 30,
+                    maxUses: 1,
+                });
+                await interaction.reply({ content: `サーバーへの招待リンクです: ${invite.url}`, ephemeral: true });
+            }
+        }
     }
 });
 const commands = [
     new SlashCommandBuilder()
-        .setName('give-role')
-        .setDescription('認証を行います'),
+    .setName('give-role')
+    .setDescription('認証を行います'),
+
+    new SlashCommandBuilder()
+        .setName('server-url')
+        .setDescription('高レベルサーバーのURLを表示します')
+        .addStringOption(option =>
+            option.setName('number')
+                .setDescription('※任意入りたいサーバーの番号')
+                .setRequired(false))
 ];
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
