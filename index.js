@@ -4,7 +4,16 @@ const token = process.env.TOKEN;
 const prefix = process.env.PREFIX;
 const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { scrapeRanking } = require('./src/scraping/scrapeRanking.js');
-
+const guildIds = [
+    "707819253629452370",
+    "754292647467810846",
+    "684256856599953450",
+    "1129277717599223859",
+    "706878162923028552",
+    "684051781675646986",
+    "807389744425074728",
+    "1219756229531013220",
+]
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent,] });
 client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -12,11 +21,50 @@ client.once('ready', () => {
 
 client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
+    if (message.content.startsWith(`${prefix}announce`)) {
+        const embed = new EmbedBuilder()
+            .setTitle("**このサーバーについて**")
+            .setDescription(`このサーバーは、OhanaClubのギルドサーバーです。主にメンバー同士が交流するために作られました。\n具体的なルールは特に定めていませんが、マナーを守っていただければ幸いです。`)
+        message.channel.send({ embeds: [embed], })
+    }
+    if (message.content.startsWith(`${prefix}say`)) {
+        const args = message.content.slice(prefix.length).trim().split(/ +/);
+        message.channel.send(args[1])
+    }
     if (message.content.startsWith(`${prefix}invite`)) {
         const inviteURL = "https://discord.com/oauth2/authorize?client_id=817952432751509515&permissions=0&integration_type=0&scope=bot"
         const embed = new EmbedBuilder()
             .setDescription(`[Botを招待する](${inviteURL})`)
         message.channel.send({ embeds: [embed], })
+    }
+    if (message.content.startsWith(`${prefix}slink`)) {
+        const args = message.content.slice(prefix.length).trim().split(/ +/);
+        if (!args[1]) {
+            const embed = new EmbedBuilder()
+                .setTitle(`どのサーバーのリンクを取得しますか？\n`)
+                .setColor(0x00AE86)
+            contents = ""
+            for (let i = 0; i < guildIds.length; i++) {
+                const guild = client.guilds.cache.get(guildIds[i]);
+                contents += `\`${i}\` : **${guild.name}**\n`
+            }
+            embed.setDescription(`\`wwslink {serverName}\`\n${contents}`)
+            message.channel.send({ embeds: [embed], })
+            return
+        } try {
+            const guild = client.guilds.cache.get(guildIds[parseInt(args[1])]);
+            const channel = guild.channels.cache
+                .filter(ch => ch.isTextBased())
+                .first();
+            const invite = await channel.createInvite({
+                maxAge: 30,
+                maxUses: 1,
+            });
+            message.channel.send(`サーバーへの招待リンクです: ${invite.url}`);
+        } catch {
+            message.channel.send("数字で指定してください！")
+        }
+
     }
     if (message.content.startsWith(`${prefix}rank`)) {
         const embed = new EmbedBuilder()
@@ -50,7 +98,6 @@ client.on('messageCreate', async (message) => {
 });
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isButton()) return;
-
     const role = interaction.customId;
 
     try {
