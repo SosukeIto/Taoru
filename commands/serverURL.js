@@ -1,7 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 require('dotenv').config();
 const guildIds = process.env.GUILD_IDS.split(',');
-console.log(guildIds)
 async function serverURL(client, interaction) {
     const number = interaction.options.getString('number')
     if (!number) {
