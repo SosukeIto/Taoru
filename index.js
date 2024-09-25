@@ -7,7 +7,8 @@ const { serverURL } = require('./commands/serverURL.js')
 const { getMail } = require('./commands/getMail.js')
 require('dotenv').config();
 const prefix = process.env.PREFIX;
-const token = process.env.token;
+const token = process.env.TOKEN;
+const adminList = process.env.ADMIN_LIST;
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -28,25 +29,42 @@ client.on('messageCreate', async (message) => {
         message.channel.send(generateRandomString(args[1]))
     }
     if (message.content.startsWith(`${prefix}announce`)) {
+        if (!adminList.includes(message.author.id)) return;
+        const args = message.content.slice(prefix.length).trim().split(/ +/);
         const embed = new EmbedBuilder()
-            .setTitle("**このサーバーについて**")
-            .setDescription(`このサーバーは、OhanaClubのギルドサーバーです。主にメンバー同士が交流するために作られました。\n具体的なルールは特に定めていませんが、マナーを守っていただければ幸いです。`)
+            .setTitle(`${args[1]}`)
+            .setDescription(`${args[2]}`)
         message.channel.send({ embeds: [embed], })
     }
     if (message.content.startsWith(`${prefix}say`)) {
+        if (!adminList.includes(message.author.id)) return;
         const args = message.content.slice(prefix.length).trim().split(/ +/);
         message.channel.send(args[1])
     }
     if (message.content.startsWith(`${prefix}invite`)) {
+        if (!adminList.includes(message.author.id)) return;
         const inviteURL = "https://discord.com/oauth2/authorize?client_id=817952432751509515&permissions=0&integration_type=0&scope=bot"
         const embed = new EmbedBuilder()
             .setDescription(`[Botを招待する](${inviteURL})`)
         message.channel.send({ embeds: [embed], })
     }
+    if (message.content.startsWith(`${prefix}eval`)) {
+        if (!adminList.includes(message.author.id)) return;
+        const code = message.content.replace("```", "").replace("js", "").replace("```", "").slice(prefix.length + 4).trim();
+        try {
+            let evaled = eval(code);
+            if (evaled instanceof Promise) {
+                evaled = await evaled;
+            }
+            const result = typeof evaled === 'string' ? evaled : require('util').inspect(evaled);
+            message.channel.send(`\`\`\`js\n${result}\n\`\`\``);
+        } catch (error) {
+            message.channel.send(`\`\`\`js\n${error}\n\`\`\``);
+        }
+    }
 });
 client.on('interactionCreate', async (interaction) => {
     if (interaction.isButton()) { await button(interaction) }
-
     if (interaction.isCommand()) {
         if (interaction.commandName === 'give-role') { await giveRole(interaction) }
         if (interaction.commandName === 'server-url') { await serverURL(client, interaction) }
