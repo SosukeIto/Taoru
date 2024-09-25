@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, REST, Routes } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, SlashCommandBuilder, REST, Routes } = require('discord.js');
 const { button } = require('./interactions/button.js');
 const { generateRandomString } = require('./assets/generateRandomString.js');
 const { rank } = require('./commands/rank.js')
