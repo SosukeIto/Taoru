@@ -1,5 +1,7 @@
-async function eval(code) {
+async function _eval(message) {
     try {
+        console.log(message.content)
+        const code = message.content.replace("```", "").replace("js", "").replace("```", "").slice(6).trim();
         let evaled = eval(code);
         if (evaled instanceof Promise) {
             evaled = await evaled;
@@ -11,5 +13,5 @@ async function eval(code) {
     }
 }
 module.exports = {
-    eval: eval
+    _eval: _eval
 }
