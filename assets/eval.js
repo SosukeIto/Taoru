@@ -1,7 +1,9 @@
 async function _eval(message) {
     try {
         console.log(message.content)
-        const code = message.content.replace("```", "").replace("js", "").replace("```", "").slice(6).trim();
+        const code = message.content.slice(6).trim();
+        if(code[0] === "```") {code.shift()}
+        if(code[code.length-1]){code.pop()}
         let evaled = eval(code);
         if (evaled instanceof Promise) {
             evaled = await evaled;
