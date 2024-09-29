@@ -6,7 +6,7 @@ const { giveRole } = require('./commands/giveRole.js')
 const { serverURL } = require('./commands/serverURL.js')
 const { getMail } = require('./commands/getMail.js')
 const { _eval } = require('./commands/eval.js')
-const { profile} = require('./commands/profile.js')
+const { status } = require('./commands/status.js')
 
 require('dotenv').config();
 const prefix = process.env.PREFIX;
@@ -55,8 +55,9 @@ client.on('messageCreate', async (message) => {
         if (!adminList.includes(message.author.id)) return;
         await _eval(message);
     }
-    if(message.content.startsWith(`${prefix}profile`)){
-        profile(message);
+    if (message.content.startsWith(`${prefix}st`)) {
+        const args = message.content.slice(prefix.length).trim().split(/ +/);
+        await status(args, message);
     }
 });
 client.on('interactionCreate', async (interaction) => {
@@ -66,7 +67,6 @@ client.on('interactionCreate', async (interaction) => {
         if (interaction.commandName === 'server-url') { await serverURL(client, interaction) }
         if (interaction.commandName === 'get-mail') { await getMail(interaction) }
         if (interaction.commandName === 'rank') { await rank(interaction) }
-        
     }
 });
 const commands = [

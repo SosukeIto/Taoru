@@ -17,9 +17,6 @@ async function scrapeRanking(role) {
             };
             rankings.push(playerData);
         });
-
-        // Return the results
-        console.log(rankings)
         return rankings;
     } catch (error) {
         console.error('An error occurred:', error);
