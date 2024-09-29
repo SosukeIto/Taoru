@@ -6,7 +6,7 @@ async function button(interaction) {
         const rankings = await scrapeRanking(role);
         let contents = "";
         for (let i = 0; i < rankings.length; i++) {
-            contents += `${i + 1}位 \`${rankings[i]['playerName']}\` : **${rankings[i]['score']}**\n`;
+            contents += `${i + 1}位 \`${rankings[i]['name']}\` : **${rankings[i]['level']}**\n`;
         }
         const rankingEmbed = new EmbedBuilder()
             .setTitle(`世界Top100プレイヤー (${role})`)
