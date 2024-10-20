@@ -7,6 +7,7 @@ const { serverURL } = require('./commands/serverURL.js')
 const { getMail } = require('./commands/getMail.js')
 const { _eval } = require('./commands/eval.js')
 const { status } = require('./commands/status.js')
+const { joinGuild } = require('./commands/joinGuild.js')
 
 require('dotenv').config();
 const prefix = process.env.PREFIX;
@@ -67,6 +68,7 @@ client.on('interactionCreate', async (interaction) => {
         if (interaction.commandName === 'server-url') { await serverURL(client, interaction) }
         if (interaction.commandName === 'get-mail') { await getMail(interaction) }
         if (interaction.commandName === 'rank') { await rank(interaction) }
+        if (interaction.commandName === 'join-guild') { await joinGuild(interaction) }
     }
 });
 const commands = [
@@ -89,7 +91,10 @@ const commands = [
                 .setRequired(true)),
     new SlashCommandBuilder()
         .setName('rank')
-        .setDescription('TAOのランクを表示')
+        .setDescription('TAOのランクを表示'),
+    new SlashCommandBuilder()
+        .setName('join-guild')
+        .setDescription('ギルドへ加入申請')
 ];
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
